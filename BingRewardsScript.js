@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         移动端微软Rewards每日任务脚本
-// @version      2025.2.27
+// @version      2025.5.11.2
 // @description  盒马卡，加油卡，电影卡，天猫卡，山姆卡通通都有
 // @author       怀沙2049
 // @match        https://*.bing.com/*
@@ -8,7 +8,7 @@
 // @icon         https://www.bing.com/favicon.ico
 // @connect      gumengya.com
 // @run-at       document-end
-// @note         更新于 2025年2月27日
+// @note         更新于 2025年5月11日
 // @supportURL   https://greasyfork.org/zh-CN/users/1192640-huaisha1224
 // @homepageURL  https://greasyfork.org/zh-CN/users/1192640-huaisha1224
 // @grant        GM_registerMenuCommand
