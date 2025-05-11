@@ -257,3 +257,49 @@ function exec() {
     humanLikeScroll();
 }
 
+
+// 在菜单命令下方添加新功能
+// 添加定时任务相关变量
+var timerId;
+const TARGET_HOUR = 8; // 每天早上8点
+
+// 新增菜单命令：定时启动
+GM_registerMenuCommand('启用定时启动', function() {
+    setupDailyTask();
+    GM_setValue('autoSchedule', true);
+}, 't');
+
+GM_registerMenuCommand('停止定时', function() {
+    clearTimeout(timerId);
+    GM_setValue('autoSchedule', false);
+}, 't');
+
+// 添加定时任务函数
+function setupDailyTask() {
+    if (GM_getValue('autoSchedule') === false) return;
+
+    const now = new Date();
+    const target = new Date(now);
+    
+    // 设置目标时间为今天8点（如果当前时间超过8点则设置为明天8点）
+    target.setHours(TARGET_HOUR, 0, 0, 0);
+    if (now >= target) {
+        target.setDate(target.getDate() + 1);
+    }
+
+    const timeDiff = target - now;
+    
+    // 设置定时器
+    timerId = setTimeout(() => {
+        GM_setValue('Cnt', 0);
+        location.href = "https://www.bing.com/?br_msg=AutoStart";
+        setupDailyTask(); // 递归调用保持每日执行
+    }, timeDiff);
+}
+
+// 在页面加载时检查是否要启动定时任务
+(function init() {
+    if (GM_getValue('autoSchedule') !== false) {
+        setupDailyTask();
+    }
+})();
