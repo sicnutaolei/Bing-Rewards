@@ -1,6 +1,6 @@
 // ==UserScript==
-// @name         移动端微软Rewards每日任务脚本
-// @version      2025.5.11.2
+// @name         移动端微软Rewards每日任务脚本_后台定时版
+// @version      2025.5.11
 // @description  盒马卡，加油卡，电影卡，天猫卡，山姆卡通通都有
 // @author       怀沙2049
 // @match        https://*.bing.com/*
@@ -10,7 +10,7 @@
 // @run-at       document-end
 // @note         更新于 2025年5月11日
 // @supportURL   https://greasyfork.org/zh-CN/users/1192640-huaisha1224
-// @homepageURL  https://greasyfork.org/zh-CN/users/1192640-huaisha1224
+// @homepageURL  https://github.com/sicnutaolei/Bing-Rewards/blob/main/BingRewardsScript.js
 // @grant        GM_registerMenuCommand
 // @grant        GM_addStyle
 // @grant        GM_openInTab
@@ -18,15 +18,15 @@
 // @grant        GM_getValue
 // @grant        GM_xmlhttpRequest
 // @background
-// @crontab * 8,11,14 once * * 每天8点11点14点中运行一次,假设当1点时运行了一次,3,5点将不会再运行
+// @crontab * 8,11,14 once * *
 // @namespace    https://greasyfork.org/zh-CN/users/1192640-huaisha1224
-// @downloadURL https://update.greasyfork.org/scripts/480355/%E7%A7%BB%E5%8A%A8%E7%AB%AF%E5%BE%AE%E8%BD%AFRewards%E6%AF%8F%E6%97%A5%E4%BB%BB%E5%8A%A1%E8%84%9A%E6%9C%AC.user.js
-// @updateURL https://update.greasyfork.org/scripts/480355/%E7%A7%BB%E5%8A%A8%E7%AB%AF%E5%BE%AE%E8%BD%AFRewards%E6%AF%8F%E6%97%A5%E4%BB%BB%E5%8A%A1%E8%84%9A%E6%9C%AC.meta.js
+// @downloadURL https://github.com/sicnutaolei/Bing-Rewards/raw/refs/heads/main/BingRewardsScript.js
+// @updateURL https://github.com/sicnutaolei/Bing-Rewards/raw/refs/heads/main/BingRewardsScript.js
 // ==/UserScript==
 
 var max_rewards = 30; //重复执行的次数
 //每执行4次搜索后插入暂停时间,解决账号被监控不增加积分的问题
-var pause_time = 9; // 暂停时长建议为16分钟,也就是960000(60000毫秒=1分钟)
+var pause_time = 960000; // 暂停时长建议为16分钟,也就是960000(60000毫秒=1分钟)
 var search_words = []; //搜索词
 var appkey = "bfed863be867b77a9d6d1918b2cb539d";// 从https://www.gmya.net/api 网站申请的热门词接口APIKEY
 var Hot_words_apis = "https://api.gmya.net/Api/";// 故梦热门词API接口网站
