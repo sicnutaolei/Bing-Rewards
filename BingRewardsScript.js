@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         移动端微软Rewards每日任务脚本_后台定时版
-// @version      2025.5.11
+// @name         微软Rewards每日任务脚本
+// @version      2025.10.27
 // @description  盒马卡，加油卡，电影卡，天猫卡，山姆卡通通都有
-// @author       怀沙2049
+// @author       怀沙2049&🍑😮‍💨
 // @match        https://*.bing.com/*
 // @license      GNU GPLv3
 // @icon         https://www.bing.com/favicon.ico
@@ -17,21 +17,20 @@
 // @grant        GM_setValue
 // @grant        GM_getValue
 // @grant        GM_xmlhttpRequest
-// @background
-// @crontab * 8,11,14 once * *
 // @namespace    https://greasyfork.org/zh-CN/users/1192640-huaisha1224
-// @downloadURL https://github.com/sicnutaolei/Bing-Rewards/raw/refs/heads/main/BingRewardsScript.js
-// @updateURL https://github.com/sicnutaolei/Bing-Rewards/raw/refs/heads/main/BingRewardsScript.js
+// @downloadURL  https://github.com/sicnutaolei/Bing-Rewards/raw/refs/heads/main/BingRewardsScript.js
+// @updateURL    https://github.com/sicnutaolei/Bing-Rewards/raw/refs/heads/main/BingRewardsScript.js
 // ==/UserScript==
 
-var max_rewards = 30; //重复执行的次数
-//每执行4次搜索后插入暂停时间,解决账号被监控不增加积分的问题
-var pause_time = 960000; // 暂停时长建议为16分钟,也就是960000(60000毫秒=1分钟)
-var search_words = []; //搜索词
-var appkey = "bfed863be867b77a9d6d1918b2cb539d";// 从https://www.gmya.net/api 网站申请的热门词接口APIKEY
-var Hot_words_apis = "https://api.gmya.net/Api/";// 故梦热门词API接口网站
+// 配置参数
+var max_rewards = 30; // 重复执行的次数
+var pause_minutes = 20; // 暂停时长（分钟）- 人类友好的表示方式
+var pause_time = pause_minutes * 60 * 1000; // 将分钟转换为毫秒
+var search_words = []; // 搜索词
+var appkey = "bfed863be867b77a9d6d1918b2cb539d"; // 从https://www.gmya.net/api 网站申请的热门词接口APIKEY
+var Hot_words_apis = "https://api.gmya.net/Api/"; // 故梦热门词API接口网站
 
-
+// 默认搜索词 - 古典名句
 var default_search_words = [
     // 《汉书》名句
     "明犯强汉者，虽远必诛",   //《汉书·傅常郑甘陈段传》
@@ -72,68 +71,51 @@ var default_search_words = [
     "欲投鼠而忌器",           //《汉书·贾谊传》
     "千人所指，无病而死"      //《汉书·王嘉传》
 ];
-//{weibohot}微博热搜榜/{bilihot}哔哩热搜榜/{douyinhot}抖音热搜榜/{zhihuhot}知乎热搜榜/{baiduhot}百度热搜榜
 
-var keywords_source = ['DouYinHot','WeiBoHot','TouTiaoHot','ZhiHuHot', 'BaiduHot'];
-var random_keywords_source = keywords_source[Math.floor(Math.random() * keywords_source.length)]
-//每次运行时随机获取一个热门搜索词来源用来作为关键词
+/**
+ * 获取热门搜索词
+ * @returns {Promise<string[]>} 搜索词数组
+ */
 function douyinhot_dic() {
+    // 固定使用DouYinHot作为API端点
+    const apiEndpoint = 'DouYinHot';
     // 根据 appkey 是否为空来决定如何构建 URL 地址
     let url;
     if (appkey) {
-        url = Hot_words_apis + random_keywords_source + "?format=json&appkey=" + appkey; // 有 appkey 则添加 appkey 参数
+        url = Hot_words_apis + apiEndpoint + "?format=json&appkey=" + appkey; // 有 appkey 则添加 appkey 参数
     } else {
-        url = Hot_words_apis + random_keywords_source; // 无 appkey 则直接请求接口地址
+        url = Hot_words_apis + apiEndpoint; // 无 appkey 则直接请求接口地址
     }
+    
     return new Promise((resolve, reject) => {
         // 发送GET请求到指定URL
         fetch(url)
             .then(response => response.json()) // 将返回的响应转换为JSON格式
             .then(data => {
-                if (data.data.some(item => item)) {
+                if (data.data && data.data.some(item => item)) {
                     // 提取每个元素的name属性值并追加随机汉字
                     const names = data.data.map(item => 
-                        item.title + generateRandomHanString(Math.floor(Math.random() * 3) + 1) // 追加1-3个随机汉字
+                        item.title + Date.now() // 追加当前时间戳
                     );
                     resolve(names);
                 } else {
-                    //如果为空使用默认搜索词
-                    resolve(default_search_words)
+                    // 如果为空使用默认搜索词
+                    resolve(default_search_words);
                 }
             })
             .catch(error => {
+                console.error('获取热门词失败:', error);
                 // 如果请求失败，则返回默认搜索词
-                resolve(default_search_words)
-                reject(error); // 将错误信息作为Promise对象的错误返回
+                resolve(default_search_words);
             });
     });
 }
 
-
-
-// 调用douyinhot_dic函数，获取names列表
-douyinhot_dic()
-    .then(names => {
-        //   console.log(names[0]);
-        search_words = names;
-        exec()
-    })
-    .catch(error => {
-        console.error(error);
-    });
-
-// 定义菜单命令：开始
-let menu1 = GM_registerMenuCommand('开始', function () {
-    GM_setValue('Cnt', 0); // 将计数器重置为0
-    location.href = "https://www.bing.com/?br_msg=Please-Wait"; // 跳转到Bing首页
-}, 'o');
-
-// 定义菜单命令：停止
-let menu2 = GM_registerMenuCommand('停止', function () {
-    GM_setValue('Cnt', max_rewards + 10); // 将计数器设置为超过最大搜索次数，以停止搜索
-}, 'o');
-
-// 生成指定长度的包含大写字母、数字的随机字符串
+/**
+ * 生成指定长度的包含大写字母、数字的随机字符串
+ * @param {number} length 字符串长度
+ * @returns {string} 随机字符串
+ */
 function generateRandomString(length) {
     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'; // 62个可选字符
     let result = '';
@@ -146,21 +128,20 @@ function generateRandomString(length) {
         // 拼接随机字符
         result += characters.charAt(randomIndex);
     }
+    
     return result; // 返回生成的随机字符串
 }
-// 生成指定长度的随机汉字字符串
-function generateRandomHanString(length) {
-    let result = '';
-    // Unicode汉字范围：0x4E00-0x9FA5（共20902个汉字）
-    for (let i = 0; i < length; i++) {
-        // 生成随机汉字编码
-        const unicode = Math.floor(Math.random() * (0x9FA5 - 0x4E00 + 1)) + 0x4E00;
-        // 将Unicode编码转换为汉字字符
-        result += String.fromCharCode(unicode);
-    }
-    return result;
+
+/**
+ * 平滑滚动到底部函数（模拟用户浏览行为）
+ */
+function smoothScrollToBottom() {
+    document.documentElement.scrollIntoView({ behavior: 'smooth', block: 'end' });
 }
 
+/**
+ * 主执行函数
+ */
 function exec() {
     // 生成10-30秒随机延迟防止请求频率过高
     let randomDelay = Math.floor(Math.random() * 20000) + 10000;
@@ -168,6 +149,7 @@ function exec() {
     let randomString = generateRandomString(4);
     // 生成32位设备标识cvid
     let randomCvid = generateRandomString(32);
+    
     'use strict';
 
     // 初始化计数器（用于追踪搜索次数）
@@ -184,9 +166,6 @@ function exec() {
         let tt = document.getElementsByTagName("title")[0];
         tt.innerHTML = "[" + currentSearchCount + " / " + max_rewards + "] " + tt.innerHTML;
         
-        // 执行页面滚动操作
-        humanLikeScroll();
-        
         // 更新搜索计数器
         GM_setValue('Cnt', currentSearchCount + 1);
         
@@ -197,7 +176,7 @@ function exec() {
             // 每2次搜索后添加暂停（反检测机制）
             if ((currentSearchCount + 1) % 2 === 0) {
                 setTimeout(function() {
-                    location.href = "https://www.bing.com/search?q=" + encodeURI(nowtxt) + "&form=" + randomString + "&cvid=" + randomCvid;
+                    location。href = "https://www.bing.com/search?q=" + encodeURI(nowtxt) + "&form=" + randomString + "&cvid=" + randomCvid;
                 }, pause_time);
             } else {
                 location.href = "https://www.bing.com/search?q=" + encodeURI(nowtxt) + "&form=" + randomString + "&cvid=" + randomCvid;
@@ -210,6 +189,7 @@ function exec() {
         tt.innerHTML = "[" + currentSearchCount + " / " + max_rewards + "] " + tt.innerHTML; // 在标题中显示当前搜索次数
         smoothScrollToBottom(); // 添加执行滚动页面到底部的操作
         GM_setValue('Cnt', currentSearchCount + 1); // 将计数器加1
+        
         setTimeout(function () {
             let nowtxt = search_words[currentSearchCount]; // 获取当前搜索词
 
@@ -224,82 +204,26 @@ function exec() {
             }
         }, randomDelay);
     }
-
-    // 平滑滚动到底部函数（模拟用户浏览行为）
-    function smoothScrollToBottom() {
-        document.documentElement.scrollIntoView({ behavior: 'smooth', block: 'end' });
-    }
-
-    // 人类行为模拟滚动函数
-    function humanLikeScroll() {
-        const maxScrolls = 3; // 最大滚动次数
-        let scrollCount = 0;
-        
-        function randomScroll() {
-            // 随机滚动方向（垂直+水平）
-            window.scrollBy({
-                left: Math.random() * 40 - 20, // -20到20像素横向滚动
-                top: window.innerHeight * 0.7 + Math.random() * 100, // 70%屏幕高度+随机值
-                behavior: 'smooth'
-            });
-            
-            // 随机滚动间隔（0.8-1.5秒）
-            if(++scrollCount < maxScrolls) {
-                setTimeout(randomScroll, 800 + Math.random() * 700);
-            }
-        }
-        
-        // 初始延迟（0.5-1秒）后开始滚动
-        setTimeout(randomScroll, 500 + Math.random() * 500);
-    }
-
-    // 模拟人类滚动模式（包含纵向+横向随机滚动）
-    humanLikeScroll();
 }
 
+// 注册菜单命令：开始
+let menu1 = GM_registerMenuCommand('开始', function () {
+    GM_setValue('Cnt', 0); // 将计数器重置为0
+    location.href = "https://www.bing.com/?br_msg=Please-Wait"; // 跳转到Bing首页
+}, 'o');
 
-// 在菜单命令下方添加新功能
-// 添加定时任务相关变量
-var timerId;
-const TARGET_HOUR = 8; // 每天早上8点
+// 注册菜单命令：停止
+let menu2 = GM_registerMenuCommand('停止', function () {
+    GM_setValue('Cnt', max_rewards + 10); // 将计数器设置为超过最大搜索次数，以停止搜索
+}, 'o');
 
-// 新增菜单命令：定时启动
-GM_registerMenuCommand('启用定时启动', function() {
-    setupDailyTask();
-    GM_setValue('autoSchedule', true);
-}, 't');
-
-GM_registerMenuCommand('停止定时', function() {
-    clearTimeout(timerId);
-    GM_setValue('autoSchedule', false);
-}, 't');
-
-// 添加定时任务函数
-function setupDailyTask() {
-    if (GM_getValue('autoSchedule') === false) return;
-
-    const now = new Date();
-    const target = new Date(now);
-    
-    // 设置目标时间为今天8点（如果当前时间超过8点则设置为明天8点）
-    target.setHours(TARGET_HOUR, 0, 0, 0);
-    if (now >= target) {
-        target.setDate(target.getDate() + 1);
-    }
-
-    const timeDiff = target - now;
-    
-    // 设置定时器
-    timerId = setTimeout(() => {
-        GM_setValue('Cnt', 0);
-        location.href = "https://www.bing.com/?br_msg=AutoStart";
-        setupDailyTask(); // 递归调用保持每日执行
-    }, timeDiff);
-}
-
-// 在页面加载时检查是否要启动定时任务
-(function init() {
-    if (GM_getValue('autoSchedule') !== false) {
-        setupDailyTask();
+// 调用douyinhot_dic函数，获取names列表并开始执行
+(async function() {
+    try {
+        const names = await douyinhot_dic();
+        search_words = names;
+        exec();
+    } catch (error) {
+        console.error('初始化失败:', error);
     }
 })();
