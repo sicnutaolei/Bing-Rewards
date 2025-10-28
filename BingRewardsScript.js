@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         微软Rewards每日任务脚本
-// @version      2025.10.27
+// @version      2025.5.11
 // @description  盒马卡，加油卡，电影卡，天猫卡，山姆卡通通都有
 // @author       怀沙2049&🍑😮‍💨
 // @match        https://*.bing.com/*
@@ -87,27 +87,40 @@ function douyinhot_dic() {
         url = Hot_words_apis + apiEndpoint; // 无 appkey 则直接请求接口地址
     }
     
-    return new Promise((resolve, reject) => {
-        // 发送GET请求到指定URL
-        fetch(url)
-            .then(response => response.json()) // 将返回的响应转换为JSON格式
-            .then(data => {
-                if (data.data && data.data.some(item => item)) {
-                    // 提取每个元素的name属性值并追加随机汉字
-                    const names = data.data.map(item => 
-                        item.title + Date.now() // 追加当前时间戳
-                    );
-                    resolve(names);
-                } else {
-                    // 如果为空使用默认搜索词
+    return new Promise((resolve) => {
+        try {
+            // 使用GM_xmlhttpRequest确保在用户脚本环境中兼容
+            GM_xmlhttpRequest({
+                method: 'GET',
+                url: url,
+                onload: function(response) {
+                    try {
+                        const data = JSON.parse(response.responseText);
+                        if (data.data && Array.isArray(data.data) && data.data.some(item => item && item.title)) {
+                            // 提取每个元素的title属性值并追加时间戳
+                            const names = data.data.map(item => 
+                                item.title + Date.now()
+                            );
+                            resolve(names);
+                        } else {
+                            // 如果数据格式不符合预期，使用默认搜索词
+                            console.log('热门词数据格式不符合预期，使用默认搜索词');
+                            resolve(default_search_words);
+                        }
+                    } catch (parseError) {
+                        console.error('解析热门词数据失败:', parseError);
+                        resolve(default_search_words);
+                    }
+                },
+                onerror: function(error) {
+                    console.error('获取热门词请求失败:', error);
                     resolve(default_search_words);
                 }
-            })
-            .catch(error => {
-                console.error('获取热门词失败:', error);
-                // 如果请求失败，则返回默认搜索词
-                resolve(default_search_words);
             });
+        } catch (e) {
+            console.error('请求热门词时发生错误:', e);
+            resolve(default_search_words);
+        }
     });
 }
 
@@ -176,7 +189,7 @@ function exec() {
             // 每2次搜索后添加暂停（反检测机制）
             if ((currentSearchCount + 1) % 2 === 0) {
                 setTimeout(function() {
-                    location。href = "https://www.bing.com/search?q=" + encodeURI(nowtxt) + "&form=" + randomString + "&cvid=" + randomCvid;
+                    location.href = "https://www.bing.com/search?q=" + encodeURI(nowtxt) + "&form=" + randomString + "&cvid=" + randomCvid;
                 }, pause_time);
             } else {
                 location.href = "https://www.bing.com/search?q=" + encodeURI(nowtxt) + "&form=" + randomString + "&cvid=" + randomCvid;
@@ -197,23 +210,23 @@ function exec() {
             if ((currentSearchCount + 1) % 5 === 0) {
                 // 暂停指定时长
                 setTimeout(function() {
-                    location.href = "https://cn.bing.com/search?q=" + encodeURI(nowtxt) + "&form=" + randomString + "&cvid=" + randomCvid; // 在Bing搜索引擎中搜索
-                }, pause_time);
+                    location。href = "https://cn.bing.com/search?q=" + encodeURI(nowtxt) + "&form=" + randomString + "&cvid=" + randomCvid; // 在Bing搜索引擎中搜索
+                }， pause_time);
             } else {
-                location.href = "https://cn.bing.com/search?q=" + encodeURI(nowtxt) + "&form=" + randomString + "&cvid=" + randomCvid; // 在Bing搜索引擎中搜索
+                location。href = "https://cn.bing.com/search?q=" + encodeURI(nowtxt) + "&form=" + randomString + "&cvid=" + randomCvid; // 在Bing搜索引擎中搜索
             }
-        }, randomDelay);
+        }， randomDelay);
     }
 }
 
 // 注册菜单命令：开始
-let menu1 = GM_registerMenuCommand('开始', function () {
+GM_registerMenuCommand('开始'， function () {
     GM_setValue('Cnt', 0); // 将计数器重置为0
     location.href = "https://www.bing.com/?br_msg=Please-Wait"; // 跳转到Bing首页
 }, 'o');
 
 // 注册菜单命令：停止
-let menu2 = GM_registerMenuCommand('停止', function () {
+GM_registerMenuCommand('停止', function () {
     GM_setValue('Cnt', max_rewards + 10); // 将计数器设置为超过最大搜索次数，以停止搜索
 }, 'o');
 
