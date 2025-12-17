@@ -23,8 +23,8 @@
 // ==/UserScript==
 
 // 配置参数
-var max_rewards = 30; // 重复执行的次数
-var pause_minutes = 20; // 暂停时长（分钟）- 人类友好的表示方式
+var max_rewards = 60; // 重复执行的次数
+var pause_minutes = 3; // 暂停时长（分钟）- 人类友好的表示方式
 var pause_time = pause_minutes * 60 * 1000; // 将分钟转换为毫秒
 var search_words = []; // 搜索词
 var appkey = "bfed863be867b77a9d6d1918b2cb539d"; // 从https://www.gmya.net/api 网站申请的热门词接口APIKEY
@@ -78,7 +78,7 @@ var default_search_words = [
  */
 function douyinhot_dic() {
     // 固定使用DouYinHot作为API端点
-    const apiEndpoint = 'DouYinHot';
+    const apiEndpoint = 'TouTiaoHot';
     // 根据 appkey 是否为空来决定如何构建 URL 地址
     let url;
     if (appkey) {
@@ -186,8 +186,8 @@ function exec() {
         setTimeout(function () {
             let nowtxt = search_words[currentSearchCount];
             
-            // 每2次搜索后添加暂停（反检测机制）
-            if ((currentSearchCount + 1) % 2 === 0) {
+            // 每5次搜索后添加暂停（反检测机制）
+            if ((currentSearchCount + 1) % 5 === 0) {
                 setTimeout(function() {
                     location.href = "https://www.bing.com/search?q=" + encodeURI(nowtxt) + "&form=" + randomString + "&cvid=" + randomCvid;
                 }, pause_time);
@@ -210,17 +210,17 @@ function exec() {
             if ((currentSearchCount + 1) % 5 === 0) {
                 // 暂停指定时长
                 setTimeout(function() {
-                    location。href = "https://cn.bing.com/search?q=" + encodeURI(nowtxt) + "&form=" + randomString + "&cvid=" + randomCvid; // 在Bing搜索引擎中搜索
-                }， pause_time);
+                    location.href = "https://cn.bing.com/search?q=" + encodeURI(nowtxt) + "&form=" + randomString + "&cvid=" + randomCvid; // 在Bing搜索引擎中搜索
+                }, pause_time);
             } else {
-                location。href = "https://cn.bing.com/search?q=" + encodeURI(nowtxt) + "&form=" + randomString + "&cvid=" + randomCvid; // 在Bing搜索引擎中搜索
+                location.href = "https://cn.bing.com/search?q=" + encodeURI(nowtxt) + "&form=" + randomString + "&cvid=" + randomCvid; // 在Bing搜索引擎中搜索
             }
-        }， randomDelay);
+        }, randomDelay);
     }
 }
 
 // 注册菜单命令：开始
-GM_registerMenuCommand('开始'， function () {
+GM_registerMenuCommand('开始', function () {
     GM_setValue('Cnt', 0); // 将计数器重置为0
     location.href = "https://www.bing.com/?br_msg=Please-Wait"; // 跳转到Bing首页
 }, 'o');
