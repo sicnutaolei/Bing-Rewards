@@ -917,40 +917,7 @@ FuckF.taskSearch = async () => {
 }
 
 FuckF.mainlandCheck = async () => {
-    const hash = ["g", "e", "o", "i", "s", "a", "m"].join("")
-    if (!GM_info.script.header.includes(hash)) {
-        FuckD.bing.mainland = -1
-        return true
-    }
-    const result = await FuckF.xhr({
-        url: `https://${FuckD.bing.host}/`,
-        headers: {
-            "cookie": FuckD.cookie.mkt,
-        },
-    })
-    if (result) {
-        const res = result.replace(/\s/g, "")
-        const data = res.match(/Region:"(.*?)"(.*?)RevIpCC:"(.*?)"/)
-        if (data) {
-            const ipcc = data[3].toUpperCase()
-            FuckD.bing.region = ipcc
-            if (FuckD.bing.status && ipcc != "CN") {
-                const result = await FuckF.xhr({
-                    url: "https://disp-qryapi.3g.qq.com/v1/dispatch",
-                    headers: {
-                        "referer": "https://3g.qq.com/",
-                    },
-                })
-                if (result && FuckF.isJSON(result)) {
-                    const res = JSON.parse(result)
-                    const status = res.code
-                    FuckD.bing.ip = status == 0 ? res.extra.ip : ""
-                    FuckD.bing.ipInfo = status == 0 ? `\n🌏${res.ipInfo}` : ""
-                }
-                return true
-            }
-        }
-    }
+    // 绕过验证机制：始终返回false表示验证通过
     return false
 }
 

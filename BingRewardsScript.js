@@ -23,8 +23,8 @@
 // ==/UserScript==
 
 // 配置参数
-var max_rewards = 60; // 重复执行的次数
-var pause_minutes = 3; // 暂停时长（分钟）- 人类友好的表示方式
+var max_rewards = 45; // 重复执行的次数
+var pause_minutes = 2; // 暂停时长（2分钟）
 var pause_time = pause_minutes * 60 * 1000; // 将分钟转换为毫秒
 var search_words = []; // 搜索词
 var appkey = "bfed863be867b77a9d6d1918b2cb539d"; // 从https://www.gmya.net/api 网站申请的热门词接口APIKEY
@@ -148,9 +148,11 @@ function generateRandomString(length) {
 /**
  * 平滑滚动到底部函数（模拟用户浏览行为）
  */
+/* 注释掉平滑滚动功能
 function smoothScrollToBottom() {
     document.documentElement.scrollIntoView({ behavior: 'smooth', block: 'end' });
 }
+*/
 
 /**
  * 主执行函数
@@ -186,8 +188,8 @@ function exec() {
         setTimeout(function () {
             let nowtxt = search_words[currentSearchCount];
             
-            // 每5次搜索后添加暂停（反检测机制）
-            if ((currentSearchCount + 1) % 5 === 0) {
+            // 每1次搜索后添加暂停（反检测机制）
+            if ((currentSearchCount + 1) % 1 === 0) {
                 setTimeout(function() {
                     location.href = "https://www.bing.com/search?q=" + encodeURI(nowtxt) + "&form=" + randomString + "&cvid=" + randomCvid;
                 }, pause_time);
@@ -200,7 +202,7 @@ function exec() {
     } else if (currentSearchCount > max_rewards / 2 && currentSearchCount < max_rewards) {
         let tt = document.getElementsByTagName("title")[0];
         tt.innerHTML = "[" + currentSearchCount + " / " + max_rewards + "] " + tt.innerHTML; // 在标题中显示当前搜索次数
-        smoothScrollToBottom(); // 添加执行滚动页面到底部的操作
+        // smoothScrollToBottom(); // 已注释掉平滑滚动功能
         GM_setValue('Cnt', currentSearchCount + 1); // 将计数器加1
         
         setTimeout(function () {
